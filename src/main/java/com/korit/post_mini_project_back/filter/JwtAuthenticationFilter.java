@@ -10,12 +10,15 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -24,29 +27,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
 //    private final UserMapper userMapper;
 
+    //OncePerRequestFilter - 인증은 한번만 일어나면 됨 - 한 요청당 jwt 한번만 확인하겠다
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
         String bearerToken = request.getHeader("Authorization");
-
-        // 잘못된 토큰이 들어오는 상황
-        if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
-            // 다음 필터로 넘겨버리기
+        if (bearerToken == null || !bearerToken.startsWith("Bearer ")) { // if문에 걸리면 다음 filter로 그냥 리턴해줘서 다음 filter로 통과
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 정상적인 토큰인 경우
-        String accessToken = bearerToken.replaceAll("Bearer ", "");
-        // 유효하지 않은 토큰의 경우 다음 필터로 넘겨버리기
-        if (!jwtTokenProvider.validateToken(accessToken)) {
+        String accessToken = bearerToken.replaceAll("Bearer ", ""); // 토큰 헤체작업
+
+        if (!jwtTokenProvider.validateToken(accessToken)) {  // 유효하지 않으면 다음필터로 통과
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 토큰이 유효한 경우
-//        int userId = jwtTokenProvider.getuserId(accessToken);
-//        User foundUser = userMapper.findUserByUserId(userId);
         int userId = jwtTokenProvider.getuserId(accessToken);
         User foundUser = null;
         if (foundUser == null) {
@@ -54,19 +52,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        System.out.println(foundUser);
-
-        // 권한 부여하기
-        PrincipalUser principalUser = new PrincipalUser(foundUser);
+        Collection<? extends GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(foundUser.getRole()));
+        PrincipalUser principalUser = new PrincipalUser(authorities, Map.of("id", foundUser.getOauth2Id()),"",foundUser);
         String password = "";
-        Collection<? extends GrantedAuthority> authorities = principalUser.getAuthorities();
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(principalUser, password, authorities);
 
-        UsernamePasswordAuthenticationToken authentication
-                = new UsernamePasswordAuthenticationToken(principalUser, password, authorities);
         SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        // 다음 필터 -> 인증 처리
         filterChain.doFilter(request, response);
     }
-
 }
