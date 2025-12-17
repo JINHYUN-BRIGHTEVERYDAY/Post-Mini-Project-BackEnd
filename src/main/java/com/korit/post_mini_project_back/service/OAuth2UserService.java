@@ -21,8 +21,8 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
         OAuth2User oAuth2User = super.loadUser(userRequest);
         String clientName = userRequest.getClientRegistration().getClientName();
 
-        Map<String, Object> attributes = new LinkedHashMap<>();
         Collection<? extends GrantedAuthority> authorities = oAuth2User.getAuthorities();
+        Map<String, Object> attributes = new LinkedHashMap<>();
         String nameAttributeKey = null;
         User user = null;
 

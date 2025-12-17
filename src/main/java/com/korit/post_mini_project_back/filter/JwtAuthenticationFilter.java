@@ -2,6 +2,7 @@ package com.korit.post_mini_project_back.filter;
 
 import com.korit.post_mini_project_back.entity.User;
 import com.korit.post_mini_project_back.jwt.JwtTokenProvider;
+import com.korit.post_mini_project_back.mapper.UserMapper;
 import com.korit.post_mini_project_back.security.PrincipalUser;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -25,7 +26,7 @@ import java.util.Map;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
-//    private final UserMapper userMapper;
+    private final UserMapper userMapper;
 
     //OncePerRequestFilter - 인증은 한번만 일어나면 됨 - 한 요청당 jwt 한번만 확인하겠다
 
@@ -46,14 +47,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         int userId = jwtTokenProvider.getuserId(accessToken);
-        User foundUser = null;
+        User foundUser = userMapper.findByUserId(userId);
         if (foundUser == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
         Collection<? extends GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(foundUser.getRole()));
-        PrincipalUser principalUser = new PrincipalUser(authorities, Map.of("id", foundUser.getOauth2Id()),"",foundUser);
+        PrincipalUser principalUser = new PrincipalUser(authorities, Map.of("id", foundUser.getOauth2Id()), "id", foundUser);
         String password = "";
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(principalUser, password, authorities);
 

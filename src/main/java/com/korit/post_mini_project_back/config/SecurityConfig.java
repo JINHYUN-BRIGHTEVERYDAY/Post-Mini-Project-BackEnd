@@ -1,6 +1,7 @@
 package com.korit.post_mini_project_back.config;
 
 import com.korit.post_mini_project_back.filter.JwtAuthenticationFilter;
+import com.korit.post_mini_project_back.security.JwtAuthenticationEntryPoint;
 import com.korit.post_mini_project_back.security.OAuth2SuccessHandler;
 import com.korit.post_mini_project_back.service.OAuth2UserService;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final OAuth2UserService oAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
@@ -43,6 +45,7 @@ public class SecurityConfig {
         http.oauth2Login(oauth2 ->
                 oauth2.userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserService))
                         .successHandler(oAuth2SuccessHandler)
+                        // 추가
         );
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -56,7 +59,7 @@ public class SecurityConfig {
             auth.anyRequest().authenticated();
         });
 
-
+        http.exceptionHandling(exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint));
 
         return http.build();
     }
