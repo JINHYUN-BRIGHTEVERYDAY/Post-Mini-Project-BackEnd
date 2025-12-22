@@ -17,8 +17,9 @@ public class Post {
     private String content;
     private String visibility;
     private int userId;
-    private LocalDateTime createDt;
+    private LocalDateTime createdAt;
 
     private User user;
     private List<ImageFile> imageFiles;
+    private Follow follow;
 }
