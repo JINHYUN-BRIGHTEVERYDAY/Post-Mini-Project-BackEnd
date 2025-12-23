@@ -44,11 +44,15 @@ public class FileService {
 
             imageFiles.add(ImageFile.builder()
                     .originalFilename(originalFileName)
-                    .filePath(filePath.toString())
+                    // substring의 괄호를 먼저 닫고, 그 결과 문자열에 replaceAll을 실행합니다.
+                    .filePath(filePath.toString()
+                            .substring(filePath.toString().indexOf("upload") + "upload".length())
+                            .replaceAll("\\\\", "/"))
                     .extension(extension)
-                    .category(extension)
+                    .category(category) // 이 부분은 필요에 따라 category 변수로 변경하세요.
                     .size(file.getSize())
                     .build());
+
 //            System.out.println(newFilename);
 //            System.out.println(filePath);
         }
